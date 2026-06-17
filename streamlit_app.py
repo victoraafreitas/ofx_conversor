@@ -22,6 +22,40 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# CSS para métricas com background
+st.markdown("""
+    <style>
+    .metric-entrada {
+        background-color: #e8f5e9;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .metric-saida {
+        background-color: #ffebee;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .metric-neutro {
+        background-color: #f5f5f5;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .metric-label {
+        font-size: 0.85em;
+        color: #666;
+        margin-bottom: 8px;
+    }
+    .metric-valor {
+        font-size: 1.5em;
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("📊 Filtro OFX")
 
 # ===================== UPLOAD ======================
@@ -87,9 +121,10 @@ with col1:
         min_value=1,
         max_value=len(month_blocks),
         value=st.session_state.linha_inicial,
+        step=1,
+        on_change=lambda: st.session_state.update({"linha_inicial": st.session_state.input_inicial}),
         key="input_inicial"
     )
-    st.session_state.linha_inicial = entrada_inicial
 
 with col2:
     entrada_final = st.number_input(
@@ -97,9 +132,10 @@ with col2:
         min_value=1,
         max_value=len(month_blocks),
         value=st.session_state.linha_final,
+        step=1,
+        on_change=lambda: st.session_state.update({"linha_final": st.session_state.input_final}),
         key="input_final"
     )
-    st.session_state.linha_final = entrada_final
 
 col1, col2 = st.columns(2)
 
@@ -109,10 +145,10 @@ with col1:
         min_value=1,
         max_value=len(month_blocks),
         value=st.session_state.linha_inicial,
+        on_change=lambda: st.session_state.update({"linha_inicial": st.session_state.slider_inicial}),
         key="slider_inicial",
         label_visibility="collapsed"
     )
-    st.session_state.linha_inicial = slider_inicial
 
 with col2:
     slider_final = st.slider(
@@ -120,10 +156,10 @@ with col2:
         min_value=1,
         max_value=len(month_blocks),
         value=st.session_state.linha_final,
+        on_change=lambda: st.session_state.update({"linha_final": st.session_state.slider_final}),
         key="slider_final",
         label_visibility="collapsed"
     )
-    st.session_state.linha_final = slider_final
 
 # Valida intervalo
 linha_inicial = st.session_state.linha_inicial
@@ -147,20 +183,101 @@ st.divider()
 total_entrada = sum(t['valor'] for t in transactions_filtradas if t['valor'] >= 0)
 total_saida = sum(t['valor'] for t in transactions_filtradas if t['valor'] < 0)
 saldo_liquido = total_entrada + total_saida
+num_transacoes = len(transactions_filtradas)
 
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric("Entradas", format_amount(total_entrada))
+    st.markdown(f"""
+    <div class="metric-entrada">
+        <div class="metric-label">Entradas</div>
+        <div class="metric-valor">{format_amount(total_entrada)}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col2:
-    st.metric("Saídas", format_amount(total_saida))
+    st.markdown(f"""
+    <div class="metric-saida">
+        <div class="metric-label">Saídas</div>
+        <div class="metric-valor">{format_amount(total_saida)}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col3:
-    st.metric("Saldo", format_amount(saldo_liquido))
+    st.markdown(f"""
+    <div class="metric-neutro">
+        <div class="metric-label">Saldo Líquido</div>
+        <div class="metric-valor">{format_amount(saldo_liquido)}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col4:
-    st.metric("Transações", len(transactions_filtradas))
+    st.markdown(f"""
+    <div class="metric-neutro">
+        <div class="metric-label">Transações</div>
+        <div class="metric-valor">{num_transacoes}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ===================== TABELA DE TRANSAÇÕES ======================
+st.divider()
+st.subheader("Movimentações")
+
+df_display = pd.DataFrame([
+    {
+        'ID': t['index'],
+        'Data': t['data'],
+        'Valor': t['valor_fmt'],
+        'Descrição': t['descricao'],
+    }
+    for t in transactions_filtradas
+])
+
+st.dataframe(
+    df_display,
+    use_container_width=True,
+    hide_index=True,
+    height=400
+)
+
+# ===================== DOWNLOAD ======================
+st.divider()
+st.subheader("Exportar")
+
+nome_saida = st.text_input(
+    "Nome do arquivo (sem extensão)",
+    value=f"filtrado_{selected_account['acctid']}_{selected_month.replace('-', '')}",
+)
+
+if st.button("Baixar OFX", type="primary", use_container_width=True):
+    if len(final_blocks) == 0:
+        st.error("Nenhuma transação selecionada")
+    else:
+        try:
+            statements = extract_statement_blocks(ofx_content)
+            new_ofx_content = build_filtered_ofx(
+                ofx_content,
+                statements,
+                selected_account,
+                final_blocks,
+                selected_month
+            )
+            
+            ofx_bytes = new_ofx_content.encode('utf-8')
+            
+            st.download_button(
+                label="Clique aqui para baixar",
+                data=ofx_bytes,
+                file_name=f"{nome_saida}.ofx",
+                mime="text/plain",
+                use_container_width=True
+            )
+            
+            st.success(f"Arquivo gerado com {len(final_blocks)} transações")
+            
+        except Exception as e:
+            st.error(f"Erro: {str(e)}")
+
 
 # ===================== TABELA DE TRANSAÇÕES ======================
 st.divider()
