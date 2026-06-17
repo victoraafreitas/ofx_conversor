@@ -8,6 +8,8 @@ import pandas as pd
 import os
 from io import BytesIO
 import re
+from datetime import datetime
+import locale
 
 from ofx_utils import (
     extract_field, parse_amount, format_amount,
@@ -162,8 +164,25 @@ with col2:
         key="input_final"
     )
 
-# Filtro por Data
+# Filtro por Data - Calcula intervalo do OFX
 st.subheader("Filtro por Data (Opcional)")
+
+# Extrai datas mínima e máxima das transações
+datas_transacoes = []
+for t in transactions:
+    try:
+        dia, mes, ano = map(int, t['data'].split('/'))
+        data_obj = datetime(ano, mes, dia).date()
+        datas_transacoes.append(data_obj)
+    except:
+        pass
+
+if datas_transacoes:
+    data_min = min(datas_transacoes)
+    data_max = max(datas_transacoes)
+else:
+    data_min = None
+    data_max = None
 
 col1, col2 = st.columns(2)
 
@@ -171,6 +190,9 @@ with col1:
     data_inicial = st.date_input(
         "Data Inicial",
         value=None,
+        min_value=data_min,
+        max_value=data_max,
+        format="DD/MM/YYYY",
         key="data_inicial"
     )
 
@@ -178,6 +200,9 @@ with col2:
     data_final = st.date_input(
         "Data Final",
         value=None,
+        min_value=data_min,
+        max_value=data_max,
+        format="DD/MM/YYYY",
         key="data_final"
     )
 
