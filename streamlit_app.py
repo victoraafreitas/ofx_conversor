@@ -164,12 +164,26 @@ with col2:
         key="input_final"
     )
 
+# Valida intervalo de IDs
+if st.session_state.linha_inicial > st.session_state.linha_final:
+    st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
+
+# Usa valores do session_state
+linha_inicial = st.session_state.linha_inicial
+linha_final = st.session_state.linha_final
+
+# Filtra transações
+idx_inicio = linha_inicial - 1
+idx_final = linha_final
+transactions = [format_transaction_row(b, i+1) for i, b in enumerate(month_blocks)]
+transactions_filtradas = transactions[idx_inicio:idx_final]
+
 # Filtro por Data - Calcula intervalo do OFX
 st.subheader("Filtro por Data (Opcional)")
 
 # Extrai datas mínima e máxima das transações
 datas_transacoes = []
-for t in transactions:
+for t in transactions_filtradas:
     try:
         dia, mes, ano = map(int, t['data'].split('/'))
         data_obj = datetime(ano, mes, dia).date()
@@ -205,20 +219,6 @@ with col2:
         format="DD/MM/YYYY",
         key="data_final"
     )
-
-# Valida intervalo de IDs
-if st.session_state.linha_inicial > st.session_state.linha_final:
-    st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
-
-# Usa valores do session_state
-linha_inicial = st.session_state.linha_inicial
-linha_final = st.session_state.linha_final
-
-# Filtra transações
-idx_inicio = linha_inicial - 1
-idx_final = linha_final
-transactions = [format_transaction_row(b, i+1) for i, b in enumerate(month_blocks)]
-transactions_filtradas = transactions[idx_inicio:idx_final]
 
 # Aplica filtro de data se selecionadas
 if data_inicial or data_final:
