@@ -79,7 +79,8 @@ account_labels = [acc['label'] for acc in accounts]
 selected_account_idx = st.selectbox(
     "Conta",
     range(len(accounts)),
-    format_func=lambda i: account_labels[i]
+    format_func=lambda i: account_labels[i],
+    key="select_conta"
 )
 selected_account = accounts[selected_account_idx]
 
@@ -95,7 +96,8 @@ month_labels = [
 selected_month_idx = st.selectbox(
     "Mês",
     range(len(months)),
-    format_func=lambda i: month_labels[i]
+    format_func=lambda i: month_labels[i],
+    key="select_mes"
 )
 selected_month = months[selected_month_idx]
 
@@ -116,7 +118,6 @@ st.subheader("Período de Extração")
 col1, col2 = st.columns(2)
 
 with col1:
-    # Número input para inicial - lê e escreve no session_state
     entrada_inicial = st.number_input(
         "ID Inicial",
         min_value=1,
@@ -125,11 +126,9 @@ with col1:
         step=1,
         key="input_inicial"
     )
-    # Sincroniza para session_state
     st.session_state.linha_inicial = entrada_inicial
 
 with col2:
-    # Número input para final - lê e escreve no session_state
     entrada_final = st.number_input(
         "ID Final",
         min_value=1,
@@ -138,17 +137,15 @@ with col2:
         step=1,
         key="input_final"
     )
-    # Sincroniza para session_state
     st.session_state.linha_final = entrada_final
 
-# Valida intervalo antes dos sliders
+# Valida intervalo
 if st.session_state.linha_inicial > st.session_state.linha_final:
     st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
 
 col1, col2 = st.columns(2)
 
 with col1:
-    # Slider para inicial - lê e escreve no session_state
     slider_inicial = st.slider(
         "Arrastar inicial",
         min_value=1,
@@ -157,11 +154,9 @@ with col1:
         key="slider_inicial",
         label_visibility="collapsed"
     )
-    # Sincroniza para session_state
     st.session_state.linha_inicial = slider_inicial
 
 with col2:
-    # Slider para final - lê e escreve no session_state
     slider_final = st.slider(
         "Arrastar final",
         min_value=1,
@@ -170,14 +165,13 @@ with col2:
         key="slider_final",
         label_visibility="collapsed"
     )
-    # Sincroniza para session_state
     st.session_state.linha_final = slider_final
 
-# Valida intervalo após sliders
+# Valida intervalo novamente
 if st.session_state.linha_inicial > st.session_state.linha_final:
     st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
 
-# Usa os valores do session_state como verdade
+# Usa valores do session_state
 linha_inicial = st.session_state.linha_inicial
 linha_final = st.session_state.linha_final
 
@@ -258,9 +252,10 @@ st.subheader("Exportar")
 nome_saida = st.text_input(
     "Nome do arquivo (sem extensão)",
     value=f"filtrado_{selected_account['acctid']}_{selected_month.replace('-', '')}",
+    key="nome_arquivo"
 )
 
-if st.button("Baixar OFX", type="primary", use_container_width=True):
+if st.button("Baixar OFX", type="primary", use_container_width=True, key="btn_download"):
     if len(final_blocks) == 0:
         st.error("Nenhuma transação selecionada")
     else:
@@ -281,67 +276,8 @@ if st.button("Baixar OFX", type="primary", use_container_width=True):
                 data=ofx_bytes,
                 file_name=f"{nome_saida}.ofx",
                 mime="text/plain",
-                use_container_width=True
-            )
-            
-            st.success(f"Arquivo gerado com {len(final_blocks)} transações")
-            
-        except Exception as e:
-            st.error(f"Erro: {str(e)}")
-
-
-# ===================== TABELA DE TRANSAÇÕES ======================
-st.divider()
-st.subheader("Movimentações")
-
-df_display = pd.DataFrame([
-    {
-        'ID': t['index'],
-        'Data': t['data'],
-        'Valor': t['valor_fmt'],
-        'Descrição': t['descricao'],
-    }
-    for t in transactions_filtradas
-])
-
-st.dataframe(
-    df_display,
-    use_container_width=True,
-    hide_index=True,
-    height=400
-)
-
-# ===================== DOWNLOAD ======================
-st.divider()
-st.subheader("Exportar")
-
-nome_saida = st.text_input(
-    "Nome do arquivo (sem extensão)",
-    value=f"filtrado_{selected_account['acctid']}_{selected_month.replace('-', '')}",
-)
-
-if st.button("Baixar OFX", type="primary", use_container_width=True):
-    if len(final_blocks) == 0:
-        st.error("Nenhuma transação selecionada")
-    else:
-        try:
-            statements = extract_statement_blocks(ofx_content)
-            new_ofx_content = build_filtered_ofx(
-                ofx_content,
-                statements,
-                selected_account,
-                final_blocks,
-                selected_month
-            )
-            
-            ofx_bytes = new_ofx_content.encode('utf-8')
-            
-            st.download_button(
-                label="Clique aqui para baixar",
-                data=ofx_bytes,
-                file_name=f"{nome_saida}.ofx",
-                mime="text/plain",
-                use_container_width=True
+                use_container_width=True,
+                key="download_ofx"
             )
             
             st.success(f"Arquivo gerado com {len(final_blocks)} transações")
