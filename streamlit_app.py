@@ -162,7 +162,26 @@ with col2:
         key="input_final"
     )
 
-# Valida intervalo
+# Filtro por Data
+st.subheader("Filtro por Data (Opcional)")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    data_inicial = st.date_input(
+        "Data Inicial",
+        value=None,
+        key="data_inicial"
+    )
+
+with col2:
+    data_final = st.date_input(
+        "Data Final",
+        value=None,
+        key="data_final"
+    )
+
+# Valida intervalo de IDs
 if st.session_state.linha_inicial > st.session_state.linha_final:
     st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
 
@@ -175,6 +194,30 @@ idx_inicio = linha_inicial - 1
 idx_final = linha_final
 transactions = [format_transaction_row(b, i+1) for i, b in enumerate(month_blocks)]
 transactions_filtradas = transactions[idx_inicio:idx_final]
+
+# Aplica filtro de data se selecionadas
+if data_inicial or data_final:
+    transactions_por_data = []
+    for t in transactions_filtradas:
+        # Converte data da transação (formato DD/MM/YYYY) para objeto date
+        try:
+            dia, mes, ano = map(int, t['data'].split('/'))
+            data_tx = pd.to_datetime(f"{ano}-{mes:02d}-{dia:02d}").date()
+            
+            # Verifica se está dentro do intervalo
+            dentro = True
+            if data_inicial and data_tx < data_inicial:
+                dentro = False
+            if data_final and data_tx > data_final:
+                dentro = False
+            
+            if dentro:
+                transactions_por_data.append(t)
+        except:
+            pass
+    
+    transactions_filtradas = transactions_por_data
+
 final_blocks = [t['raw'] for t in transactions_filtradas]
 
 # ===================== RESUMO FINANCEIRO ======================
