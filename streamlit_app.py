@@ -113,39 +113,54 @@ if 'linha_inicial' not in st.session_state:
 if 'linha_final' not in st.session_state:
     st.session_state.linha_final = len(month_blocks)
 
+# Funções de validação em tempo real
+def validar_inicial():
+    valor = st.session_state.input_inicial
+    # Filtra apenas dígitos
+    valor_limpo = ''.join(filter(str.isdigit, valor))
+    # Se vazio, usa padrão
+    if not valor_limpo:
+        st.session_state.input_inicial = str(st.session_state.linha_inicial)
+    else:
+        # Limita ao intervalo válido
+        valor_int = int(valor_limpo)
+        valor_int = max(1, min(valor_int, len(month_blocks)))
+        st.session_state.input_inicial = str(valor_int)
+        st.session_state.linha_inicial = valor_int
+
+def validar_final():
+    valor = st.session_state.input_final
+    # Filtra apenas dígitos
+    valor_limpo = ''.join(filter(str.isdigit, valor))
+    # Se vazio, usa padrão
+    if not valor_limpo:
+        st.session_state.input_final = str(st.session_state.linha_final)
+    else:
+        # Limita ao intervalo válido
+        valor_int = int(valor_limpo)
+        valor_int = max(1, min(valor_int, len(month_blocks)))
+        st.session_state.input_final = str(valor_int)
+        st.session_state.linha_final = valor_int
+
 st.subheader("Período de Extração")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    entrada_inicial_str = st.text_input(
+    st.text_input(
         "ID Inicial",
         value=str(st.session_state.linha_inicial),
+        on_change=validar_inicial,
         key="input_inicial"
     )
-    # Filtra apenas dígitos
-    entrada_inicial_str = ''.join(filter(str.isdigit, entrada_inicial_str))
-    try:
-        entrada_inicial = int(entrada_inicial_str) if entrada_inicial_str else st.session_state.linha_inicial
-        entrada_inicial = max(1, min(entrada_inicial, len(month_blocks)))
-        st.session_state.linha_inicial = entrada_inicial
-    except ValueError:
-        pass
 
 with col2:
-    entrada_final_str = st.text_input(
+    st.text_input(
         "ID Final",
         value=str(st.session_state.linha_final),
+        on_change=validar_final,
         key="input_final"
     )
-    # Filtra apenas dígitos
-    entrada_final_str = ''.join(filter(str.isdigit, entrada_final_str))
-    try:
-        entrada_final = int(entrada_final_str) if entrada_final_str else len(month_blocks)
-        entrada_final = max(1, min(entrada_final, len(month_blocks)))
-        st.session_state.linha_final = entrada_final
-    except ValueError:
-        pass
 
 # Valida intervalo
 if st.session_state.linha_inicial > st.session_state.linha_final:
