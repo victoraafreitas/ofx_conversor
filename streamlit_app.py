@@ -123,6 +123,8 @@ with col1:
         value=str(st.session_state.linha_inicial),
         key="input_inicial"
     )
+    # Filtra apenas dígitos
+    entrada_inicial_str = ''.join(filter(str.isdigit, entrada_inicial_str))
     try:
         entrada_inicial = int(entrada_inicial_str) if entrada_inicial_str else st.session_state.linha_inicial
         entrada_inicial = max(1, min(entrada_inicial, len(month_blocks)))
@@ -136,6 +138,8 @@ with col2:
         value=str(st.session_state.linha_final),
         key="input_final"
     )
+    # Filtra apenas dígitos
+    entrada_final_str = ''.join(filter(str.isdigit, entrada_final_str))
     try:
         entrada_final = int(entrada_final_str) if entrada_final_str else len(month_blocks)
         entrada_final = max(1, min(entrada_final, len(month_blocks)))
