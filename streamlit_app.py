@@ -1,5 +1,5 @@
 """
-Aplicação Streamlit para filtro de OFX - Interface moderna e intuitiva.
+Aplicação Streamlit para filtro de OFX - Interface limpa e profissional.
 Execute com: streamlit run streamlit_app.py
 """
 
@@ -16,57 +16,55 @@ from ofx_utils import (
 )
 
 st.set_page_config(
-    page_title="OFX Filter Pro",
+    page_title="Filtro OFX",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Estilos
+# Estilos minimalistas
 st.markdown("""
     <style>
     .header-title {
-        text-align: center;
-        color: #1f77b4;
-        font-size: 2.5em;
-        font-weight: bold;
-        margin-bottom: 0.5em;
+        color: #1a1a1a;
+        font-size: 2em;
+        font-weight: 600;
+        margin-bottom: 1em;
     }
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .metrics-row {
+        display: flex;
+        gap: 20px;
+        margin: 20px 0;
+    }
+    .metric-box {
+        flex: 1;
         padding: 20px;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
+        background: #f8f9fa;
+        border-left: 4px solid #1f77b4;
+        border-radius: 4px;
+    }
+    .metric-label {
+        font-size: 0.85em;
+        color: #666;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .metric-value {
         font-size: 1.8em;
-        font-weight: bold;
-        margin: 10px 0;
+        font-weight: 600;
+        color: #1a1a1a;
     }
-    .metric-label {
-        font-size: 0.9em;
-        opacity: 0.9;
+    .value-positive {
+        color: #28a745;
     }
-    .success-box {
-        background: #d4edda;
-        border: 1px solid #c3e6cb;
-        padding: 15px;
-        border-radius: 5px;
-        color: #155724;
-    }
-    .warning-box {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        padding: 15px;
-        border-radius: 5px;
-        color: #856404;
+    .value-negative {
+        color: #dc3545;
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="header-title">📊 OFX Filter Pro</div>', unsafe_allow_html=True)
-st.markdown("---")
+st.markdown('<div class="header-title">📊 Filtro OFX</div>', unsafe_allow_html=True)
 
 # ===================== SIDEBAR: Upload e Seleção ======================
 with st.sidebar:
@@ -123,28 +121,17 @@ with st.sidebar:
 # ===================== MAIN CONTENT ======================
 
 
-# ===================== SEÇÃO DE VISUALIZAÇÃO ======================
-st.header("📋 Transações do Período")
-
+# ===================== RESUMO FINANCEIRO ======================
 # Formata transações
 transactions = [format_transaction_row(b, i+1) for i, b in enumerate(month_blocks)]
-df_display = pd.DataFrame([
-    {
-        '#': t['index'],
-        'Data': t['data'],
-        'Valor': t['valor_fmt'],
-        'Descrição': t['descricao'],
-    }
-    for t in transactions
-])
 
-# Sliders para intervalo
+# Sliders para intervalo de linhas
+st.subheader("Período de Extração")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("4️⃣ Intervalo de Linhas")
-    linha_inicial = st.slider(
-        "Linha Inicial",
+    linha_inicial = st.number_input(
+        "ID Inicial",
         min_value=1,
         max_value=len(transactions),
         value=1,
@@ -152,17 +139,38 @@ with col1:
     )
 
 with col2:
-    linha_final = st.slider(
-        "Linha Final",
-        min_value=max(1, linha_inicial),
+    linha_final = st.number_input(
+        "ID Final",
+        min_value=1,
         max_value=len(transactions),
         value=len(transactions),
         key="linha_final"
     )
 
+# Sliders para ajuste fino
+col1, col2 = st.columns(2)
+
+with col1:
+    linha_inicial = st.slider(
+        "Arraste para ajustar inicial",
+        min_value=1,
+        max_value=len(transactions),
+        value=int(linha_inicial),
+        key="slider_inicial"
+    )
+
+with col2:
+    linha_final = st.slider(
+        "Arraste para ajustar final",
+        min_value=1,
+        max_value=len(transactions),
+        value=int(linha_final),
+        key="slider_final"
+    )
+
 # Valida intervalo
 if linha_inicial > linha_final:
-    linha_inicial = linha_final
+    linha_inicial, linha_final = linha_final, linha_inicial
 
 # Filtra transações pelo intervalo
 idx_inicio = linha_inicial - 1
@@ -170,61 +178,56 @@ idx_final = linha_final
 transactions_filtradas = transactions[idx_inicio:idx_final]
 final_blocks = [t['raw'] for t in transactions_filtradas]
 
-# Exibe tabela de transações
-st.dataframe(
-    df_display.iloc[idx_inicio:idx_final].reset_index(drop=True),
-    use_container_width=True,
-    hide_index=True
-)
-
-# ===================== RESUMO FINANCEIRO ======================
-st.markdown("---")
-
+# Calcula resumo
 total_entrada = sum(t['valor'] for t in transactions_filtradas if t['valor'] >= 0)
 total_saida = sum(t['valor'] for t in transactions_filtradas if t['valor'] < 0)
 saldo_liquido = total_entrada + total_saida
 
-# Cards de resumo
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Entradas</div>
-        <div class="metric-value" style="color: #90EE90;">{format_amount(total_entrada)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Saídas</div>
-        <div class="metric-value" style="color: #FFB6C6;">{format_amount(total_saida)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    cor_saldo = "#90EE90" if saldo_liquido >= 0 else "#FFB6C6"
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">Saldo Líquido</div>
-        <div class="metric-value" style="color: {cor_saldo};">{format_amount(saldo_liquido)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Info sobre seleção
+# Exibe métricas em linha
 st.markdown(f"""
-<div class="success-box">
-📊 <strong>Resumo da Seleção</strong><br>
-• Linhas selecionadas: <strong>{len(transactions_filtradas)}</strong> de {len(transactions)}<br>
-• Período: <strong>{selected_month.replace('-', '/')}</strong><br>
-• Conta: <strong>{selected_account['label']}</strong>
+<div class="metrics-row">
+    <div class="metric-box">
+        <div class="metric-label">Entradas</div>
+        <div class="metric-value value-positive">{format_amount(total_entrada)}</div>
+    </div>
+    <div class="metric-box">
+        <div class="metric-label">Saídas</div>
+        <div class="metric-value value-negative">{format_amount(total_saida)}</div>
+    </div>
+    <div class="metric-box">
+        <div class="metric-label">Saldo Líquido</div>
+        <div class="metric-value" style="color: {'#28a745' if saldo_liquido >= 0 else '#dc3545'};">{format_amount(saldo_liquido)}</div>
+    </div>
+    <div class="metric-box">
+        <div class="metric-label">Transações</div>
+        <div class="metric-value">{len(transactions_filtradas)}</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
+# ===================== TABELA DE TRANSAÇÕES ======================
+st.subheader("Movimentações")
+
+df_display = pd.DataFrame([
+    {
+        'ID': t['index'],
+        'Data': t['data'],
+        'Valor': t['valor_fmt'],
+        'Descrição': t['descricao'],
+    }
+    for t in transactions_filtradas
+])
+
+st.dataframe(
+    df_display,
+    use_container_width=True,
+    hide_index=True,
+    height=400
+)
+
 # ===================== DOWNLOAD ======================
 st.markdown("---")
-st.subheader("💾 Exportar Arquivo Filtrado")
+st.subheader("💾 Exportar Arquivo")
 
 col1, col2 = st.columns([3, 1])
 
@@ -238,7 +241,7 @@ with col1:
 with col2:
     st.write("")  # Espaço
     st.write("")
-    btn_download = st.button("⬇️ Baixar OFX Filtrado", use_container_width=True, type="primary")
+    btn_download = st.button("⬇️ Baixar", use_container_width=True, type="primary")
 
 if btn_download:
     if len(final_blocks) == 0:
@@ -266,26 +269,7 @@ if btn_download:
                 use_container_width=True
             )
             
-            st.markdown(f"""
-            <div class="success-box">
-            ✨ <strong>Arquivo gerado com sucesso!</strong><br>
-            • Transações: {len(final_blocks)}<br>
-            • Total entradas: {format_amount(total_entrada)}<br>
-            • Total saídas: {format_amount(total_saida)}<br>
-            • Saldo: {format_amount(saldo_liquido)}
-            </div>
-            """, unsafe_allow_html=True)
+            st.success(f"✨ Arquivo gerado com sucesso! {len(final_blocks)} transações")
             
         except Exception as e:
             st.error(f"❌ Erro ao processar arquivo: {str(e)}")
-
-# ===================== RODAPÉ ======================
-st.markdown("---")
-st.markdown(
-    """
-    <div style="text-align: center; color: #888; font-size: 0.9em; margin-top: 2em;">
-    OFX Filter Pro v1.0 | Desenvolvido para Antigravity
-    </div>
-    """,
-    unsafe_allow_html=True
-)
