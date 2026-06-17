@@ -118,26 +118,30 @@ st.subheader("Período de Extração")
 col1, col2 = st.columns(2)
 
 with col1:
-    entrada_inicial = st.number_input(
+    entrada_inicial_str = st.text_input(
         "ID Inicial",
-        min_value=1,
-        max_value=len(month_blocks),
-        value=st.session_state.linha_inicial,
-        step=1,
-        on_change=lambda: st.session_state.update({"linha_inicial": st.session_state.input_inicial}),
+        value=str(st.session_state.linha_inicial),
         key="input_inicial"
     )
+    try:
+        entrada_inicial = int(entrada_inicial_str) if entrada_inicial_str else st.session_state.linha_inicial
+        entrada_inicial = max(1, min(entrada_inicial, len(month_blocks)))
+        st.session_state.linha_inicial = entrada_inicial
+    except ValueError:
+        pass
 
 with col2:
-    entrada_final = st.number_input(
+    entrada_final_str = st.text_input(
         "ID Final",
-        min_value=1,
-        max_value=len(month_blocks),
-        value=st.session_state.linha_final,
-        step=1,
-        on_change=lambda: st.session_state.update({"linha_final": st.session_state.input_final}),
+        value=str(st.session_state.linha_final),
         key="input_final"
     )
+    try:
+        entrada_final = int(entrada_final_str) if entrada_final_str else len(month_blocks)
+        entrada_final = max(1, min(entrada_final, len(month_blocks)))
+        st.session_state.linha_final = entrada_final
+    except ValueError:
+        pass
 
 # Valida intervalo
 if st.session_state.linha_inicial > st.session_state.linha_final:
