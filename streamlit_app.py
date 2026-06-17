@@ -124,9 +124,9 @@ with col1:
         max_value=len(month_blocks),
         value=st.session_state.linha_inicial,
         step=1,
+        on_change=lambda: st.session_state.update({"linha_inicial": st.session_state.input_inicial}),
         key="input_inicial"
     )
-    st.session_state.linha_inicial = entrada_inicial
 
 with col2:
     entrada_final = st.number_input(
@@ -135,9 +135,9 @@ with col2:
         max_value=len(month_blocks),
         value=st.session_state.linha_final,
         step=1,
+        on_change=lambda: st.session_state.update({"linha_final": st.session_state.input_final}),
         key="input_final"
     )
-    st.session_state.linha_final = entrada_final
 
 # Valida intervalo
 if st.session_state.linha_inicial > st.session_state.linha_final:
