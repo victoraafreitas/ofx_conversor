@@ -178,9 +178,6 @@ idx_final = linha_final
 transactions = [format_transaction_row(b, i+1) for i, b in enumerate(month_blocks)]
 transactions_filtradas = transactions[idx_inicio:idx_final]
 
-# Filtro por Data - Calcula intervalo do OFX
-st.subheader("Filtro por Data (Opcional)")
-
 # Extrai datas mínima e máxima das transações
 datas_transacoes = []
 for t in transactions_filtradas:
