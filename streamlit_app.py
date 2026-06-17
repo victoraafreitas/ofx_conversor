@@ -107,7 +107,7 @@ month_blocks = selected_account['month_map'][selected_month]
 # ===================== PERÍODO DE EXTRAÇÃO ======================
 st.divider()
 
-# Inicializa session state para sincronização
+# Inicializa session state
 if 'linha_inicial' not in st.session_state:
     st.session_state.linha_inicial = 1
 if 'linha_final' not in st.session_state:
@@ -140,34 +140,6 @@ with col2:
     st.session_state.linha_final = entrada_final
 
 # Valida intervalo
-if st.session_state.linha_inicial > st.session_state.linha_final:
-    st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
-
-col1, col2 = st.columns(2)
-
-with col1:
-    slider_inicial = st.slider(
-        "Arrastar inicial",
-        min_value=1,
-        max_value=len(month_blocks),
-        value=st.session_state.linha_inicial,
-        key="slider_inicial",
-        label_visibility="collapsed"
-    )
-    st.session_state.linha_inicial = slider_inicial
-
-with col2:
-    slider_final = st.slider(
-        "Arrastar final",
-        min_value=1,
-        max_value=len(month_blocks),
-        value=st.session_state.linha_final,
-        key="slider_final",
-        label_visibility="collapsed"
-    )
-    st.session_state.linha_final = slider_final
-
-# Valida intervalo novamente
 if st.session_state.linha_inicial > st.session_state.linha_final:
     st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
 
