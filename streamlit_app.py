@@ -116,59 +116,70 @@ st.subheader("Período de Extração")
 col1, col2 = st.columns(2)
 
 with col1:
+    # Número input para inicial - lê e escreve no session_state
     entrada_inicial = st.number_input(
         "ID Inicial",
         min_value=1,
         max_value=len(month_blocks),
         value=st.session_state.linha_inicial,
         step=1,
-        on_change=lambda: st.session_state.update({"linha_inicial": st.session_state.input_inicial}),
         key="input_inicial"
     )
+    # Sincroniza para session_state
+    st.session_state.linha_inicial = entrada_inicial
 
 with col2:
+    # Número input para final - lê e escreve no session_state
     entrada_final = st.number_input(
         "ID Final",
         min_value=1,
         max_value=len(month_blocks),
         value=st.session_state.linha_final,
         step=1,
-        on_change=lambda: st.session_state.update({"linha_final": st.session_state.input_final}),
         key="input_final"
     )
+    # Sincroniza para session_state
+    st.session_state.linha_final = entrada_final
+
+# Valida intervalo antes dos sliders
+if st.session_state.linha_inicial > st.session_state.linha_final:
+    st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
 
 col1, col2 = st.columns(2)
 
 with col1:
+    # Slider para inicial - lê e escreve no session_state
     slider_inicial = st.slider(
         "Arrastar inicial",
         min_value=1,
         max_value=len(month_blocks),
         value=st.session_state.linha_inicial,
-        on_change=lambda: st.session_state.update({"linha_inicial": st.session_state.slider_inicial}),
         key="slider_inicial",
         label_visibility="collapsed"
     )
+    # Sincroniza para session_state
+    st.session_state.linha_inicial = slider_inicial
 
 with col2:
+    # Slider para final - lê e escreve no session_state
     slider_final = st.slider(
         "Arrastar final",
         min_value=1,
         max_value=len(month_blocks),
         value=st.session_state.linha_final,
-        on_change=lambda: st.session_state.update({"linha_final": st.session_state.slider_final}),
         key="slider_final",
         label_visibility="collapsed"
     )
+    # Sincroniza para session_state
+    st.session_state.linha_final = slider_final
 
-# Valida intervalo
+# Valida intervalo após sliders
+if st.session_state.linha_inicial > st.session_state.linha_final:
+    st.session_state.linha_inicial, st.session_state.linha_final = st.session_state.linha_final, st.session_state.linha_inicial
+
+# Usa os valores do session_state como verdade
 linha_inicial = st.session_state.linha_inicial
 linha_final = st.session_state.linha_final
-
-if linha_inicial > linha_final:
-    linha_inicial, linha_final = linha_final, linha_inicial
-    st.session_state.linha_inicial = linha_inicial
-    st.session_state.linha_final = linha_final
 
 # Filtra transações
 idx_inicio = linha_inicial - 1
