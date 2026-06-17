@@ -116,11 +116,11 @@ with st.sidebar:
         # Obter transações do mês
         month_blocks = selected_account['month_map'][selected_month]
         st.success(f"✅ {len(month_blocks)} transações carregadas")
+    else:
+        st.info("👈 Faça o upload de um arquivo OFX para começar")
+        st.stop()
 
 # ===================== MAIN CONTENT ======================
-else:
-    st.info("👈 Faça o upload de um arquivo OFX para começar")
-    st.stop()
 
 
 # ===================== SEÇÃO DE VISUALIZAÇÃO ======================
